@@ -44,15 +44,26 @@ class App(object):
         self.main_loop()
 
     def main_loop(self):
-        clock = pygame.time.Clock()
+        self.clock = pygame.time.Clock()
+        self.isJump = False # прыгает ли игрок
+        self.jumpCount = 4
+        self.y0 = self.player.position[1]
+        self.z0 = self.player.position[2]
+        self.fly = 0
+
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
                     sys.exit()
+                # elif event.type == pygame.KEYUP:
+                #     self.process_input(dt)
+                # elif event.type == pygame.KEYDOWN:
+                #     self.process_input(dt)
+
             if not self.game_over:
                 self.display()
-                dt = clock.tick(self.fps)
+                dt = self.clock.tick(self.fps)
                 for block in self.blocks:
                     block.update(dt)
                 self.clear_past_blocks()
@@ -60,6 +71,7 @@ class App(object):
                 self.check_collisions()
                 self.process_input(dt)
                 print(self.player.position)
+                print(self.jumpCount)
 
     def check_collisions(self): # проиграл ли
         blocks = filter(lambda x: 0 < x.position[2] < 1,
@@ -114,8 +126,8 @@ class App(object):
         pygame.display.flip()
 
     def process_input(self, dt):
+        #print('is_jump = ', self.isJump)
         pressed = pygame.key.get_pressed()
-        pressed = pygame.key.get_focused()
         x, y, z = self.player.position
         if pressed[K_LEFT]:
             x -= 0.01 * dt
@@ -126,13 +138,24 @@ class App(object):
         if pressed[K_RIGHT]:
             x += 0.01 * dt
             x = max(min(x, 7), -7)
-        if pressed[K_SPACE]:
-            y0 = y
-            y += 0.01 * dt
-            y = max(min(y, 7), -7)
-            y = y0
+        if pressed[K_SPACE] or self.isJump:
+            if self.jumpCount > -4:
+                self.isJump = True
+                y += self.jumpCount*abs(self.jumpCount) / 10
+                y = round(y, 2)
+                self.jumpCount -= 0.5
+                #print('hello')
+            elif self.jumpCount < -4:
+                self.jumpCount = 4
+                self.isJump = False
+                y = self.y0
+            elif self.jumpCount == -4:
+                self.fly += 1
+                self.isJump = True
+                if self.fly > 7:
+                    self.fly = 0
+                    self.jumpCount = -5
         self.player.position = (x, y, z)
-
 
 if __name__ == '__main__':
     app = App()
