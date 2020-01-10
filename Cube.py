@@ -1,6 +1,7 @@
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+
 class Cube(object):
     sides = ((0, 1, 2, 3), (3, 2, 7, 6), (6, 7, 5, 4),
              (4, 5, 1, 0), (1, 5, 7, 2), (4, 0, 3, 6))

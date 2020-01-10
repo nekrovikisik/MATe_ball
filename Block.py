@@ -1,20 +1,20 @@
+import os, sys
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-class Sphere(object):
-    slices = 40
-    stacks = 40
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, CURRENT_DIR)
+from Cube import Cube
 
-    def __init__(self, radius, position, color):
-        self.radius = radius
-        self.position = position
-        self.color = color
-        self.quadratic = gluNewQuadric()
+class Block(Cube):
+    color = (0, 0, 1, 1)
+    speed = 0.01
 
-    def render(self):
-        glPushMatrix()
-        glTranslatef(*self.position)
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, self.color)
-        gluSphere(self.quadratic, self.radius, Sphere.slices, Sphere.stacks)
-        glPopMatrix()
+    def __init__(self, position, size):
+        super().__init__(position, (size, 1, 1), Block.color)
+        self.size = size
 
+    def update(self, dt):
+        x, y, z = self.position
+        z += Block.speed * dt
+        self.position = x, y, z
