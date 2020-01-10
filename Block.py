@@ -7,7 +7,8 @@ sys.path.insert(0, CURRENT_DIR)
 from Cube import Cube
 
 class Block(Cube):
-    color = (0, 0, 1, 1)
+
+    color = (100 / 255, 153 / 255, 153 / 255, 0)
     speed = 0.01
 
     def __init__(self, position, size):

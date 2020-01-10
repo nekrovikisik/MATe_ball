@@ -23,7 +23,7 @@ class Light(object):
         glLightfv(light_id, GL_POSITION, self.position)
         glLightfv(light_id, GL_DIFFUSE, color)  # рассеянный свет, далее задается его параметры рассеивания
         glLightfv(light_id, GL_CONSTANT_ATTENUATION, 0.1)  # интенсивность константа
-        glLightfv(light_id, GL_LINEAR_ATTENUATION, 0.05)  # интенсивность линейный множитель
+        glLightfv(light_id, GL_LINEAR_ATTENUATION, 0.028)  # интенсивность линейный множитель
 
     def switch_color(self):
         self.current_color += 1
