@@ -8,6 +8,7 @@ from Cube import Cube
 
 class Block(Cube):
 
+    #color = (100 / 255, 153 / 255, 153 / 255, 0)
     color = (100 / 255, 153 / 255, 153 / 255, 0)
     speed = 0.01
 
@@ -17,5 +18,6 @@ class Block(Cube):
 
     def update(self, dt):
         x, y, z = self.position
+        print('block pos', x, y, z)
         z += Block.speed * dt
         self.position = x, y, z
