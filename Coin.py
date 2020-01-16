@@ -35,7 +35,7 @@ class Coin(object):
     def render(self):
         #glTranslatef(-0.75, -0.5, 0.0)
         #glRotatef(270.0, 1.0, 0.0, 0.0)
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,  [0.2, 1.0, 0.2, 1.0])
+        #glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,  [0.2, 1.0, 0.2, 1.0])
 
         glEnable(GL_BLEND)
         glBlendFunc(GL_ONE, GL_ZERO)
@@ -47,7 +47,7 @@ class Coin(object):
         gluQuadricDrawStyle(cylinder, GLU_FILL)
         gluQuadricNormals(cylinder, GLU_SMOOTH)
 
-        #glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, self.color)
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, self.color)
         gluCylinder(cylinder, self.radius, self.radius, self.height, 40, 40)
         gluDeleteQuadric(cylinder)
         #glutSwapBuffers()
