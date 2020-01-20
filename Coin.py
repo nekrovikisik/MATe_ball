@@ -18,6 +18,21 @@ class Coin(object):
         self.quadratic = gluNewQuadric()
 
     def render2(self):
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_ONE, GL_ZERO)
+        glPushMatrix()
+        glTranslatef(*self.position)
+        cylinder = gluNewQuadric()
+        gluQuadricDrawStyle(cylinder, GLU_FILL)
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, self.color)
+        gluCylinder(cylinder, self.radius, self.radius, self.height, 30, 30)
+        gluQuadricNormals(cylinder, GLU_SMOOTH)
+
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, self.color)
+        gluCylinder(cylinder, self.radius, self.radius, self.height, 40, 40)
+        gluDeleteQuadric(cylinder)
+        glPopMatrix()
+
         posx, posy = self.position[0], self.position[1]
         sides = 32
         radius = 1

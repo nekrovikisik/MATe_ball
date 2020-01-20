@@ -116,7 +116,7 @@ class App(object):
         self.random_dt_coin += dt
         if self.random_dt_coin >= 800:
             r = random.random()
-            if r > 0.02:
+            if r < 0.05:
                 self.random_dt_coin = 0
                 self.generate_coin()
 
@@ -126,9 +126,20 @@ class App(object):
         self.blocks.append(Block((offset, 0, -40), size))
 
     def generate_coin(self):
-        offset = random.choice([-4, 0, 4])
-        #self.coins.append(Coin((offset, 0.3, -40)))
-        self.coins.append(Coin((offset, 3, -40)))
+        offset = random.choice(range(-4, 5, 1))
+        x, y, z = (offset, 0, -40)
+        if not self.blocks: # если блоков нет, генерим монету
+            self.coins.append(Coin((x, y, z)))
+            return
+        lastBlock_X = self.blocks[-1].position[0]
+        lastBlock_Y = self.blocks[-1].position[1]
+        # если монетка где-то около блока, ее не будет
+        #if not (lastBlock_X - 4 <= x <= lastBlock_X + 4) and not (lastBlock_Y - 1 <= y <= lastBlock_Y + 1):
+        if (lastBlock_X - 4 <= x <= lastBlock_X + 4):
+            self.coins.append(Coin((lastBlock_X, y + 2.5, z)))
+        else:
+            self.coins.append(Coin((x, y, z)))
+
 
     def clear_past_blocks(self):
         blocks = filter(lambda x: x.position[2] > 5,
@@ -144,6 +155,16 @@ class App(object):
         for coins in coins:
             self.coins.remove(coins)
             del coins
+
+    def draw(self, my_text='MATe_ball', cords = [], color=(100, 255, 100)):
+        font = pygame.font.Font(None, 50)
+        text = font.render(my_text, 1, color)
+        text_x, text_y = cords
+        text_w = text.get_width()
+        text_h = text.get_height()
+        #screen.blit(text, (text_x, text_y))
+        pygame.draw.rect(self.screen, color, (text_x - 10, text_y - 10,
+                                               text_w + 20, text_h + 20), 1)
 
     def display(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
