@@ -24,6 +24,7 @@ class App(object):
         self.random_dt = 0
         self.random_dt_coin = 0
         self.blocks = []
+        self.money = 0
         self.coins = []
         self.light = Light(GL_LIGHT0, (0, 15, -25, 1))
         self.player = Sphere(1, position=(0, 0, 0),
@@ -77,6 +78,8 @@ class App(object):
     def check_collisions(self):  # проиграл ли
         blocks = filter(lambda x: 0 < x.position[2] < 1,
                         self.blocks)
+        coins = filter(lambda x: 0 < x.position[2] < 1,
+                        self.coins)
         x = self.player.position[0]
         y = self.player.position[1]
         r = self.player.radius
@@ -90,6 +93,16 @@ class App(object):
             if (is_left or is_right) and not is_upper:
                 self.game_over = True
                 print("Game over!")
+        for coin in coins:
+            x1 = coin.position[0]
+            y1 = coin.position[1]
+            s = coin.radius / 2
+            is_left = x1 - s < x - r < x1 + s  # левая половинка задела
+            is_right = x1 - s < x + r < x1 + s  # правая половинка задела
+            is_upper = y1 < y
+            if (is_left or is_right) and not is_upper:
+                self.money += 1
+                print(self.money)
 
     def add_random_block(self, dt):
         self.random_dt += dt

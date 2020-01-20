@@ -17,6 +17,7 @@ class Cube(object):
             (-x, -y, z), (-x, y, z))
 
     def render(self):
+
         glPushMatrix()
         glTranslatef(*self.position)
         glBegin(GL_QUADS)
