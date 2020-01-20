@@ -75,7 +75,7 @@ class App(object):
                 self.check_collisions()
                 self.process_input(dt)
 
-    def check_collisions(self):  # проиграл ли
+    def check_collisions(self):  # проиграл или собрал монетку
         blocks = filter(lambda x: 0 < x.position[2] < 1,
                         self.blocks)
         coins = filter(lambda x: 0 < x.position[2] < 1,
