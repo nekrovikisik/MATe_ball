@@ -5,6 +5,7 @@ import random
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, CURRENT_DIR)
+
 from Light import Light
 from Sphere import Sphere
 from Cube import Cube
@@ -17,6 +18,7 @@ from OpenGL.GLU import *
 class App(object):
     def __init__(self, width=800, height=600):
         self.title = 'My first OpenGL game'
+        self.start_clicked = False
         self.fps = 60
         self.width = width
         self.height = height
@@ -35,18 +37,24 @@ class App(object):
 
     def start(self):
         pygame.init()
-        pygame.display.set_mode((self.width, self.height),
-                                OPENGL | DOUBLEBUF)
+        self.pygame_init()
+        self.main_loop()
+
+    def pygame_init(self):
+        self.font = pygame.font.Font(None, 36)
+        self.screen = pygame.display.set_mode((self.width, self.height))
+
+    def openGL_init(self):
+        pygame.display.set_mode((self.width, self.height), OPENGL | DOUBLEBUF)
         pygame.display.set_caption(self.title)
+
         self.light.enable()
         glEnable(GL_DEPTH_TEST)
         glClearColor(.1, .1, .1, 1)
         glMatrixMode(GL_PROJECTION)
-        aspect = self.width / self.height
-        gluPerspective(45, aspect, 1, 100)
+        gluPerspective(45, self.width / self.height, 1, 100)
         glMatrixMode(GL_MODELVIEW)
         glEnable(GL_CULL_FACE)
-        self.main_loop()
 
     def main_loop(self):
         self.clock = pygame.time.Clock()
@@ -57,29 +65,80 @@ class App(object):
 
         while True:
             for event in pygame.event.get():
+                if not self.start_clicked:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        mouse_position = pygame.mouse.get_pos()
+                        self.onClick(mouse_position)
+                    self.draw_menu()
                 if event.type == QUIT:
                     pygame.quit()
                     sys.exit()
+                if event.type == pygame.KEYDOWN and event.key == 13:
+                    self.start_game()
 
-            if not self.game_over:
+            if self.start_clicked and not self.game_over:
                 self.display()
                 dt = self.clock.tick(self.fps)
                 for block in self.blocks:
                     block.update(dt)
                 for coin in self.coins:
                     coin.update(dt)
+                # self.drawText((0, 10*dt, self.player.position[2]), 'АУЕ')
                 self.clear_past_blocks()
                 self.add_random_block(dt)
                 self.clear_past_coins()
                 self.add_random_coin(dt)
                 self.check_collisions()
                 self.process_input(dt)
+    def start_game(self):
+        self.score = 0
+        self.start_clicked = True
+        self.openGL_init()
+
+    def draw_menu(self, score=-1):
+        font = pygame.font.Font(None, 72)
+        logo = font.render("MAT_eball!", 1, (100, 255, 100))
+        self.screen.blit(logo, (75, self.width / 2))
+        text = font.render("Play!", 1, (100, 255, 100))
+
+        if score > -1:
+            textScore = font.render(f"score: {score}", 1, (100, 255, 100))
+            textScore_x = self.width // 2 - text.get_width() // 2
+            textScore_y = self.height // 2 - text.get_height() // 2 - 50
+            self.screen.blit(textScore, (textScore_x, textScore_y))
+            text_y = self.height // 2 - text.get_height() // 2 + 100
+        else:
+            text_y = self.height // 2 - text.get_height() // 2
+        text_x = self.width // 2 - text.get_width() // 2
+        text_w = text.get_width()
+        text_h = text.get_height()
+        pygame.draw.rect(self.screen, (0, 255, 0), (text_x - 10, text_y - 10,
+                                                    text_w + 20, text_h + 20), 1)
+        self.buttons = {'play': [text_x - 10, text_y - 10, text_w + 20, text_h + 20]}
+        self.screen.blit(text, (text_x, text_y))
+        pygame.display.flip()
+
+    def onClick(self, mousePos):
+        mousePos_X = mousePos[0]
+        mousePos_Y = mousePos[1]
+        try:
+            for key in self.buttons.keys():
+                cords = self.buttons[key]
+                # если нажали на кнопку
+                if (mousePos_X > cords[0]) and (mousePos_X < cords[0] + cords[2]) and \
+                        (mousePos_Y > cords[1]) and (mousePos_Y < cords[1] + cords[3]):
+                    if key == 'play':
+                        print('click')
+                        self.start_game()
+
+        except:
+            print('click "play" ')
 
     def check_collisions(self):  # проиграл или собрал монетку
         blocks = filter(lambda x: 0 < x.position[2] < 1,
                         self.blocks)
         coins = filter(lambda x: 0 < x.position[2] < 1,
-                        self.coins)
+                       self.coins)
         x = self.player.position[0]
         y = self.player.position[1]
         r = self.player.radius
@@ -92,6 +151,8 @@ class App(object):
             is_upper = y1 < y
             if (is_left or is_right) and not is_upper:
                 self.game_over = True
+                self.pygame_init()
+                self.start_clicked = False
                 print("Game over!")
         for coin in coins:
             x1 = coin.position[0]
@@ -128,18 +189,17 @@ class App(object):
     def generate_coin(self):
         offset = random.choice(range(-4, 5, 1))
         x, y, z = (offset, 0, -40)
-        if not self.blocks: # если блоков нет, генерим монету
+        if not self.blocks:  # если блоков нет, генерим монету
             self.coins.append(Coin((x, y, z)))
             return
         lastBlock_X = self.blocks[-1].position[0]
         lastBlock_Y = self.blocks[-1].position[1]
         # если монетка где-то около блока, ее не будет
-        #if not (lastBlock_X - 4 <= x <= lastBlock_X + 4) and not (lastBlock_Y - 1 <= y <= lastBlock_Y + 1):
+        # if not (lastBlock_X - 4 <= x <= lastBlock_X + 4) and not (lastBlock_Y - 1 <= y <= lastBlock_Y + 1):
         if (lastBlock_X - 4 <= x <= lastBlock_X + 4):
             self.coins.append(Coin((lastBlock_X, y + 2.5, z)))
         else:
             self.coins.append(Coin((x, y, z)))
-
 
     def clear_past_blocks(self):
         blocks = filter(lambda x: x.position[2] > 5,
@@ -151,20 +211,27 @@ class App(object):
     def clear_past_coins(self):
 
         coins = filter(lambda x: x.position[2] > 5,
-                        self.coins)
+                       self.coins)
         for coins in coins:
             self.coins.remove(coins)
             del coins
 
-    def draw(self, my_text='MATe_ball', cords = [], color=(100, 255, 100)):
+    def draw(self, my_text='MATe_ball', cords=[], color=(100, 255, 100)):
         font = pygame.font.Font(None, 50)
         text = font.render(my_text, 1, color)
         text_x, text_y = cords
         text_w = text.get_width()
         text_h = text.get_height()
-        #screen.blit(text, (text_x, text_y))
+        # screen.blit(text, (text_x, text_y))
         pygame.draw.rect(self.screen, color, (text_x - 10, text_y - 10,
-                                               text_w + 20, text_h + 20), 1)
+                                              text_w + 20, text_h + 20), 1)
+
+    def drawText(self, position, textString):
+        font = pygame.font.Font(None, 64)
+        textSurface = font.render(textString, True, (255, 255, 255, 255))
+        textData = pygame.image.tostring(textSurface, "RGBA", True)
+        glRasterPos3d(*position)
+        glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
 
     def display(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
