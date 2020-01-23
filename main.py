@@ -22,11 +22,12 @@ class App(object):
         self.fps = 60
         self.width = width
         self.height = height
-        self.game_over = False
+        self.set_startValues()
+
+    def set_startValues(self):
         self.random_dt = 0
         self.random_dt_coin = 0
         self.blocks = []
-        self.money = 0
         self.coins = []
         self.light = Light(GL_LIGHT0, (0, 15, -25, 1))
         self.player = Sphere(1, position=(0, 0, 0),
@@ -41,13 +42,17 @@ class App(object):
         self.main_loop()
 
     def pygame_init(self):
-        self.font = pygame.font.Font(None, 36)
         self.screen = pygame.display.set_mode((self.width, self.height))
+        self.draw_menu()
 
     def openGL_init(self):
+        self.score = -1
+        self.wallet = []
+        print(self.start_clicked)
+        self.start_clicked = True
         pygame.display.set_mode((self.width, self.height), OPENGL | DOUBLEBUF)
         pygame.display.set_caption(self.title)
-
+        self.set_startValues()
         self.light.enable()
         glEnable(GL_DEPTH_TEST)
         glClearColor(.1, .1, .1, 1)
@@ -55,6 +60,7 @@ class App(object):
         gluPerspective(45, self.width / self.height, 1, 100)
         glMatrixMode(GL_MODELVIEW)
         glEnable(GL_CULL_FACE)
+        print('im init opengl')
 
     def main_loop(self):
         self.clock = pygame.time.Clock()
@@ -62,28 +68,26 @@ class App(object):
         self.jumpCount = 4
         self.y0 = self.player.position[1]
         self.fly = 0
-
+        self.draw_menu()
         while True:
             for event in pygame.event.get():
-                if not self.start_clicked:
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        mouse_position = pygame.mouse.get_pos()
-                        self.onClick(mouse_position)
-                    self.draw_menu()
+                if not self.start_clicked and event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_position = pygame.mouse.get_pos()
+                    self.onClick(mouse_position)
                 if event.type == QUIT:
                     pygame.quit()
                     sys.exit()
-                if event.type == pygame.KEYDOWN and event.key == 13:
+                if event.type == pygame.KEYDOWN and event.key == 13: # если нажали на enter
                     self.start_game()
 
-            if self.start_clicked and not self.game_over:
+            if self.start_clicked:
+                #print('display!!')
                 self.display()
                 dt = self.clock.tick(self.fps)
                 for block in self.blocks:
                     block.update(dt)
                 for coin in self.coins:
-                    coin.update(dt)
-                # self.drawText((0, 10*dt, self.player.position[2]), 'АУЕ')
+                    coin[0].update(dt)
                 self.clear_past_blocks()
                 self.add_random_block(dt)
                 self.clear_past_coins()
@@ -91,24 +95,31 @@ class App(object):
                 self.check_collisions()
                 self.process_input(dt)
     def start_game(self):
-        self.score = 0
+        print('opengl init')
+        self.score = -1
+        self.wallet = []
         self.start_clicked = True
         self.openGL_init()
 
-    def draw_menu(self, score=-1):
+    def draw_menu(self):
+        try:
+            score = self.score
+        except:
+            score = -1
+        print('hello i draw menu')
         font = pygame.font.Font(None, 72)
-        logo = font.render("MAT_eball!", 1, (100, 255, 100))
-        self.screen.blit(logo, (75, self.width / 2))
+        logo = font.render("MATe_ball!", 1, (100, 255, 100))
+        self.screen.blit(logo, (self.width // 2 - 120, 50))
         text = font.render("Play!", 1, (100, 255, 100))
 
-        if score > -1:
+        if score > -3:
             textScore = font.render(f"score: {score}", 1, (100, 255, 100))
-            textScore_x = self.width // 2 - text.get_width() // 2
-            textScore_y = self.height // 2 - text.get_height() // 2 - 50
+            textScore_x = self.width // 2 - 100
+            textScore_y = self.height // 2 - text.get_height() // 2 - 100
             self.screen.blit(textScore, (textScore_x, textScore_y))
-            text_y = self.height // 2 - text.get_height() // 2 + 100
-        else:
             text_y = self.height // 2 - text.get_height() // 2
+        else:
+            text_y = self.height // 2 + text.get_height() // 2
         text_x = self.width // 2 - text.get_width() // 2
         text_w = text.get_width()
         text_h = text.get_height()
@@ -130,14 +141,13 @@ class App(object):
                     if key == 'play':
                         print('click')
                         self.start_game()
-
         except:
             print('click "play" ')
 
     def check_collisions(self):  # проиграл или собрал монетку
         blocks = filter(lambda x: 0 < x.position[2] < 1,
                         self.blocks)
-        coins = filter(lambda x: 0 < x.position[2] < 1,
+        coins = filter(lambda x: 0 < x[0].position[2] < 1,
                        self.coins)
         x = self.player.position[0]
         y = self.player.position[1]
@@ -150,20 +160,20 @@ class App(object):
             is_right = x1 - s < x + r < x1 + s  # правая половинка задела
             is_upper = y1 < y
             if (is_left or is_right) and not is_upper:
-                self.game_over = True
-                self.pygame_init()
-                self.start_clicked = False
                 print("Game over!")
+                self.start_clicked = False
+                self.pygame_init()
         for coin in coins:
-            x1 = coin.position[0]
-            y1 = coin.position[1]
-            s = coin.radius / 2
-            is_left = x1 - s < x - r < x1 + s  # левая половинка задела
-            is_right = x1 - s < x + r < x1 + s  # правая половинка задела
-            is_upper = y1 < y
-            if (is_left or is_right) and not is_upper:
-                self.money += 1
-                print(self.money)
+            x1 = coin[0].position[0]
+            y1 = coin[0].position[1]
+            z1 = coin[0].position[1]
+            hash = coin[1]
+            if abs(x - x1) < 5 and abs(y - y1) < 5:
+                self.wallet.append((x1, y1, z1, hash) )
+                print(x1, y1, z1, hash)
+                #print(self.wallet)
+                self.score = len(set(self.wallet))
+                print(self.score)
 
     def add_random_block(self, dt):
         self.random_dt += dt
@@ -190,16 +200,16 @@ class App(object):
         offset = random.choice(range(-4, 5, 1))
         x, y, z = (offset, 0, -40)
         if not self.blocks:  # если блоков нет, генерим монету
-            self.coins.append(Coin((x, y, z)))
-            return
+            self.coins.append([Coin((x, y, z)),  random.random()])
+            return                #print(self.wallet)
+
         lastBlock_X = self.blocks[-1].position[0]
         lastBlock_Y = self.blocks[-1].position[1]
         # если монетка где-то около блока, ее не будет
-        # if not (lastBlock_X - 4 <= x <= lastBlock_X + 4) and not (lastBlock_Y - 1 <= y <= lastBlock_Y + 1):
         if (lastBlock_X - 4 <= x <= lastBlock_X + 4):
-            self.coins.append(Coin((lastBlock_X, y + 2.5, z)))
+            self.coins.append([Coin((lastBlock_X, y + 2.5, z)), random.random()])
         else:
-            self.coins.append(Coin((x, y, z)))
+            self.coins.append([Coin((x, y, z)), random.random()])
 
     def clear_past_blocks(self):
         blocks = filter(lambda x: x.position[2] > 5,
@@ -209,8 +219,8 @@ class App(object):
             del block
 
     def clear_past_coins(self):
-
-        coins = filter(lambda x: x.position[2] > 5,
+        coin0 = [coin[0] for coin in self.coins]
+        coins = filter(lambda x: x[0].position[2] > 5,
                        self.coins)
         for coins in coins:
             self.coins.remove(coins)
@@ -243,7 +253,7 @@ class App(object):
         for block in self.blocks:
             block.render()
         for coin in self.coins:
-            coin.render2()
+            coin[0].render2()
         self.player.render()
         self.ground.render()
         pygame.display.flip()
